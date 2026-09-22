@@ -1,0 +1,68 @@
+================================================================================
+GUÍA RÁPIDA Y GENERAL DE COMANDOS DE TERMINAL (SISTEMAS OPERATIVOS - C)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. PATRONES GENERALES DE COMPILACIÓN Y EJECUCIÓN CON GCC
+--------------------------------------------------------------------------------
+
+[A] Programa básico / Proceso único:
+  gcc -Wall programa.c -o programa
+  ./programa
+
+[B] Programas con execv() (Múltiples binarios):
+  # Regla: Compilar PRIMERO el ejecutable secundario (el que será llamado por execv)
+  gcc -Wall programa_hijo.c -o programa_hijo
+  gcc -Wall programa_padre.c -o programa_padre
+  ./programa_padre
+
+--------------------------------------------------------------------------------
+2. COMANDOS CLÁSICOS DE TERMINAL PARA COMPROBACIÓN Y DEPURACIÓN
+--------------------------------------------------------------------------------
+
+[A] Ver procesos activos y buscar PIDs (Comando clásico de clase):
+  ps -ef
+  ps -ef | grep <nombre_programa>
+  # Muestra: USUARIO   PID   PPID   C   STIME   TTY   TIME   CMD
+
+[B] Ver jerarquía / árbol de procesos (Padre e Hijos):
+  pstree -p                       # Muestra el árbol visual con PIDs
+  ps -ef --forest                 # Muestra la jerarquía de procesos encadenados
+
+[C] Enviar y listar señales desde la terminal (kill):
+  kill -l                         # Listar TODAS las señales del sistema con sus números
+  kill -<NÚMERO_SEÑAL> <PID>      # Enviar una señal específica a un proceso
+
+  Señales más comunes en evaluaciones:
+  - kill -2 <PID>                 # SIGINT (Interrupción / Ctrl+C)
+  - kill -5 <PID>                 # SIGTRAP (Trap de depuración)
+  - kill -10 <PID>                # SIGUSR1 (Señal de usuario 1)
+  - kill -12 <PID>                # SIGUSR2 (Señal de usuario 2)
+  - kill -15 <PID>                # SIGTERM (Terminación estándar)
+  - kill -9 <PID>                 # SIGKILL (Forzar cierre inmediato)
+
+[D] Recursos IPC System V (Colas, Memoria Compartida y Semáforos):
+  ipcs -a                         # Listar TODOS los recursos IPC activos
+  ipcs -q                         # Listar solo Colas de Mensajes
+  ipcs -m                         # Listar solo segmentos de Memoria Compartida
+  ipcs -s                         # Listar solo Semáforos
+  ipcrm -q <msqid>                # Borrar una Cola de Mensajes por su ID
+  ipcrm -m <shmid>                # Borrar Memoria Compartida por su ID
+  ipcrm -s <semid>                # Borrar un Semáforo por su ID
+
+[E] Tuberías Nombradas (FIFOs):
+  ls -l /tmp                      # Ver archivos en /tmp (las FIFOs inician con 'p')
+  rm /tmp/mi_fifo                 # Borrar una FIFO creada en disco
+  lsof /tmp/mi_fifo               # Ver qué proceso tiene abierta la FIFO
+
+--------------------------------------------------------------------------------
+3. RESUMEN CONCEPTUAL DE LAS 7 TÉCNICAS POSIX
+--------------------------------------------------------------------------------
+  1. FORK            : fork() duplica el proceso (retorna 0 al Hijo, PID al Padre).
+  2. EXECV           : execv("./ejecutable", args) reemplaza la imagen de memoria.
+  3. PIPE            : pipe(fd) tubería anónima (fd[0] lectura, fd[1] escritura).
+  4. DUP2            : dup2(fd[0], STDIN_FILENO) redirige la lectura a la entrada estándar.
+  5. SIGNAL          : signal(SIG, handler) captura señales enviadas con kill.
+  6. MESSAGE PASSING : msgget(), msgsnd(), msgrcv() colas IPC System V.
+  7. FIFO            : mkfifo("/tmp/fifo", 0666) tubería nombrada en disco.
+================================================================================
