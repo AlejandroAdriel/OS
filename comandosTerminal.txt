@@ -1,155 +1,419 @@
 ================================================================================
-GUÍA MAESTRA DE COMANDOS DE TERMINAL: COMPILACIÓN Y PRUEBA (OS)
+GUÍA DE COMPILACIÓN Y PRUEBA POR TÉCNICAS OS
+================================================================================
+Este manual contiene los comandos detallados y paso a paso para compilar y probar
+cada programa de forma legible e individualizada.
+
+Banderas de compilación recomendadas:
+  GCC: -Wall (advertencias), -lpthread (hilos/POSIX), -lrt (tiempo real e IPC)
+  G++: -std=c++17 -Wall -lpthread
+
+================================================================================
+1. FORK (CREACIÓN Y GESTIÓN DE PROCESOS)
 ================================================================================
 
-Este archivo contiene los comandos exactos y funcionales para compilar y probar
-todos los programas del proyecto organizados en carpetas (excluyendo kernel).
+[1.1 Template Mínimo]
+  Ruta: fork/template/template.c
+  Compilación:
+    gcc fork/template/template.c -o fork/template/run
+  Ejecución:
+    ./fork/template/run
 
---------------------------------------------------------------------------------
-1. COMANDOS ÚTILES DEL SISTEMA E IPC
---------------------------------------------------------------------------------
-- Ver procesos:            ps -ef | grep <nombre>   |   pstree -p
-- Ver hilos activos:       ps -eLf | grep <nombre>
-- Listar IPCs activos:     ipcs -a  (o -m para memoria, -q para colas, -s para semáforos)
-- Limpiar todos los IPC:   ipcrm -a (o: ipcs -m | awk '{print $2}' | xargs -n1 ipcrm -m 2>/dev/null)
-- Enviar señales:          kill -SIGUSR1 <PID>  |  kill -SIGINT <PID>  |  kill -9 <PID>
+[1.2 Program_0 (Implementación Didáctica)]
+  Ruta: fork/program0/program0.c
+  Compilación:
+    gcc fork/program0/program0.c -o fork/program0/run
+  Ejecución:
+    ./fork/program0/run
 
---------------------------------------------------------------------------------
-2. COMPILACIÓN Y PRUEBA DE TEMPLATES (MÍNIMA IMPLEMENTACIÓN)
---------------------------------------------------------------------------------
+[1.3 Condición de Carrera en Salida Estándar (Race Condition con Fork)]
+  Ruta: fork/raceConditionFork/raceConditionFork.c
+  Compilación:
+    gcc fork/raceConditionFork/raceConditionFork.c -o fork/raceConditionFork/run
+  Ejecución:
+    ./fork/raceConditionFork/run
 
-[Fork]
-  gcc fork/template/template.c -o fork/template/run && ./fork/template/run
+[1.4 Demos de ForkPipe 1 y 2]
+  - ForkPipe Variante 1:
+      gcc fork/forkPipe/program2.c -o fork/forkPipe/programa2.exe
+      gcc fork/forkPipe/forkPipe.c -o fork/forkPipe/run
+      cd fork/forkPipe && ./run && cd ../..
+  - ForkPipe Variante 2:
+      gcc fork/forkPipe2/program3.c -o fork/forkPipe2/program3.exe
+      gcc fork/forkPipe2/forkPipe2.c -o fork/forkPipe2/run
+      cd fork/forkPipe2 && ./run && cd ../..
 
-[Pipe]
-  gcc pipe/template/template.c -o pipe/template/run && ./pipe/template/run
+================================================================================
+2. PIPE (TUBERÍAS ANÓNIMAS EN MEMORIA)
+================================================================================
 
-[FIFO]
-  gcc fifo/template/template.c -o fifo/template/run && ./fifo/template/run
+[2.1 Template Mínimo]
+  Ruta: pipe/template/template.c
+  Compilación:
+    gcc pipe/template/template.c -o pipe/template/run
+  Ejecución:
+    ./pipe/template/run
 
-[Signalización]
-  gcc signalizacion/template/template.c -o signalizacion/template/run && ./signalizacion/template/run
+[2.2 Program_0 (Lectura y Escritura Padre-Hijo)]
+  Ruta: pipe/program0/program0.c
+  Compilación:
+    gcc pipe/program0/program0.c -o pipe/program0/run
+  Ejecución:
+    ./pipe/program0/run
 
-[Message Passing]
-  gcc messagePassing/template/template.c -o messagePassing/template/run && ./messagePassing/template/run
+[2.3 Pipe Demo]
+  Ruta: pipe/pipeDemo/pipe.c
+  Compilación:
+    gcc pipe/pipeDemo/pipe.c -o pipe/pipeDemo/run
+  Ejecución:
+    ./pipe/pipeDemo/run
 
-[Semáforos]
-  gcc semafora/template/template.c -o semafora/template/run && ./semafora/template/run
+================================================================================
+3. FIFO (TUBERÍAS CON NOMBRE EN DISCO)
+================================================================================
 
-[Memoria Compartida]
-  gcc sharedMemory/template/template.c -o sharedMemory/template/run && ./sharedMemory/template/run
+[3.1 Template Mínimo]
+  Ruta: fifo/template/template.c
+  Compilación:
+    gcc fifo/template/template.c -o fifo/template/run
+  Ejecución:
+    ./fifo/template/run
 
-[Execv] (Requiere compilar hijo primero)
-  gcc execv/template/hijo.c -o execv/template/hijo
-  gcc execv/template/template.c -o execv/template/run
-  cd execv/template && ./run && cd ../..
+[3.2 Program_0 (Tubería Nombrada en /tmp)]
+  Ruta: fifo/program0/program0.c
+  Compilación:
+    gcc fifo/program0/program0.c -o fifo/program0/run
+  Ejecución:
+    ./fifo/program0/run
 
-[Dup2] (Requiere compilar hijo primero)
-  gcc dup2/template/hijo.c -o dup2/template/hijo
-  gcc dup2/template/template.c -o dup2/template/run
-  cd dup2/template && ./run && cd ../..
+================================================================================
+4. EXECV (REEMPLAZO DE LA IMAGEN DE PROCESO)
+================================================================================
+* NOTA: Requiere compilar primero el binario secundario ("hijo") que será ejecutado.
 
-[Locks - C++]
-  g++ -std=c++17 locks/template/template.cpp -o locks/template/run -lpthread && ./locks/template/run
+[4.1 Template Mínimo]
+  Ruta: execv/template/
+  Compilación:
+    gcc execv/template/hijo.c -o execv/template/hijo
+    gcc execv/template/template.c -o execv/template/run
+  Ejecución:
+    cd execv/template
+    ./run
+    cd ../..
 
-[Condicional Variable - C++]
-  g++ -std=c++17 condicionalVariable/template/template.cpp -o condicionalVariable/template/run -lpthread && ./condicionalVariable/template/run
+[4.2 Program_0]
+  Ruta: execv/program0/
+  Compilación:
+    gcc execv/program0/hijo.c -o execv/program0/hijo
+    gcc execv/program0/program0.c -o execv/program0/run
+  Ejecución:
+    cd execv/program0
+    ./run
+    cd ../..
 
---------------------------------------------------------------------------------
-3. COMPILACIÓN Y PRUEBA DE PROGRAMAS DIDÁCTICOS (program0 Y DEMOS)
---------------------------------------------------------------------------------
+================================================================================
+5. DUP2 (REDIRECCIÓN DE DESCRIPTORES DE ARCHIVO)
+================================================================================
 
-[Locks y Concurrencia]
-  g++ -std=c++17 locks/program0/program0.cpp -o locks/program0/run -lpthread
-  g++ -std=c++17 locks/lockGuard/lockGuard.cpp -o locks/lockGuard/run -lpthread
-  g++ -std=c++17 locks/lockExceptionDemo/lockExceptionDemo.cpp -o locks/lockExceptionDemo/run -lpthread
-  g++ -std=c++17 locks/raceConditionDemo/raceConditionDemo.cpp -o locks/raceConditionDemo/run -lpthread
-  g++ -std=c++17 locks/raceConditionDemo/threadsRaceCondition.cpp -o locks/raceConditionDemo/runThreads -lpthread
-  g++ -std=c++17 locks/basicThreads/basicThreads.cpp -o locks/basicThreads/run -lpthread
+[5.1 Template Mínimo]
+  Ruta: dup2/template/
+  Compilación:
+    gcc dup2/template/hijo.c -o dup2/template/hijo
+    gcc dup2/template/template.c -o dup2/template/run
+  Ejecución:
+    cd dup2/template
+    ./run
+    cd ../..
 
-[Fork y Demos de Laboratorio]
-  gcc fork/program0/program0.c -o fork/program0/run
-  gcc fork/raceConditionFork/raceConditionFork.c -o fork/raceConditionFork/run
-  # forkPipe (compila ejecutable llamado por execv):
-  gcc fork/forkPipe/program2.c -o fork/forkPipe/programa2.exe
-  gcc fork/forkPipe/forkPipe.c -o fork/forkPipe/run
-  # forkPipe2:
-  gcc fork/forkPipe2/program3.c -o fork/forkPipe2/program3.exe
-  gcc fork/forkPipe2/forkPipe2.c -o fork/forkPipe2/run
+[5.2 Program_0 (Redirección de Pipe a Entrada Estándar STDIN)]
+  Ruta: dup2/program0/
+  Compilación:
+    gcc dup2/program0/hijo.c -o dup2/program0/hijo
+    gcc dup2/program0/program0.c -o dup2/program0/run
+  Ejecución:
+    cd dup2/program0
+    ./run
+    cd ../..
 
-[Shared Memory (Servidor / Cliente en dos terminales)]
-  gcc "sharedMemory/program0/program0Server.c" -o "sharedMemory/program0/server"
-  gcc "sharedMemory/program0/program0Client.c" -o "sharedMemory/program0/client"
-  # Terminal 1: ./"sharedMemory/program0/server"
-  # Terminal 2: ./"sharedMemory/program0/client"
+================================================================================
+6. SIGNALIZACIÓN (SEÑALES Y MANEJADORES ASÍNCRONOS)
+================================================================================
 
---------------------------------------------------------------------------------
-4. COMPILACIÓN Y PRUEBA DE COMBINACIONES MULTITÉCNICA
---------------------------------------------------------------------------------
+[6.1 Template Mínimo]
+  Ruta: signalizacion/template/template.c
+  Compilación:
+    gcc signalizacion/template/template.c -o signalizacion/template/run
+  Ejecución:
+    ./signalizacion/template/run
 
-[P1: Fork + Pipe + Execv + Signalización + Message Passing]
-  gcc "combinaciones/forkPipeExecvSignalizacionMessagePassing/procesoC.c" -o "combinaciones/forkPipeExecvSignalizacionMessagePassing/proceso_c"
-  gcc "combinaciones/forkPipeExecvSignalizacionMessagePassing/procesoA.c" -o "combinaciones/forkPipeExecvSignalizacionMessagePassing/proceso_a" -lrt
-  cd combinaciones/forkPipeExecvSignalizacionMessagePassing && ./proceso_a && cd ../..
+[6.2 Program_0 (Captura de SIGINT / Ctrl+C)]
+  Ruta: signalizacion/program0/program0.c
+  Compilación:
+    gcc signalizacion/program0/program0.c -o signalizacion/program0/run
+  Ejecución:
+    ./signalizacion/program0/run
+    (Presionar Ctrl+C en la terminal para disparar la señal, o abrir otra terminal y hacer: kill -2 <PID>)
 
-[P2: 7 Técnicas POSIX Integradas]
-  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/relector.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/relector"
-  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/principal.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/principal"
-  cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2 && ./principal && cd ../..
+[6.3 Laboratorio 01 y Saltos No Locales (sigsetjmp / siglongjmp)]
+  - Demo Básico:
+      gcc signalizacion/signalDemo01/signal01.c -o signalizacion/signalDemo01/run01
+      ./signalizacion/signalDemo01/run01
+  - Demo con Saltos Sigsetjmp/Siglongjmp:
+      gcc signalizacion/signalDemo01/signal01J.c -o signalizacion/signalDemo01/run01J
+      ./signalizacion/signalDemo01/run01J
 
-[P3: Cadena Dominó de 7 Técnicas]
-  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/final.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/final"
-  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/cadena.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/cadena"
-  cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3 && ./cadena && cd ../..
+================================================================================
+7. MESSAGE PASSING (COLAS DE MENSAJES SYSTEM V)
+================================================================================
 
-[P4: Servidor Continuo con 7 Técnicas]
-  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/final.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/final"
-  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/servidor.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/servidor"
-  cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4 && ./servidor && cd ../..
+[7.1 Template Mínimo]
+  Ruta: messagePassing/template/template.c
+  Compilación:
+    gcc messagePassing/template/template.c -o messagePassing/template/run
+  Ejecución:
+    ./messagePassing/template/run
 
-[L3: Signalización + FIFO + Message Passing]
-  gcc "combinaciones/signalizacionFifoMessagePassing/program1.c" -o "combinaciones/signalizacionFifoMessagePassing/program1"
-  gcc "combinaciones/signalizacionFifoMessagePassing/program2.c" -o "combinaciones/signalizacionFifoMessagePassing/program2"
-  gcc "combinaciones/signalizacionFifoMessagePassing/program3.c" -o "combinaciones/signalizacionFifoMessagePassing/program3"
+[7.2 Program_0]
+  Ruta: messagePassing/program0/program0.c
+  Compilación:
+    gcc messagePassing/program0/program0.c -o messagePassing/program0/run
+  Ejecución:
+    ./messagePassing/program0/run
 
---------------------------------------------------------------------------------
-5. COMPILACIÓN Y PRUEBA DE LAS 55 DUPLAS (combinaciones/duplas)
---------------------------------------------------------------------------------
+[7.3 Emisor y Receptor en 2 Terminales (Laboratorio 2)]
+  Compilación:
+    gcc messagePassing/l2Msgq/emisor.c -o messagePassing/l2Msgq/emisor
+    gcc messagePassing/l2Msgq/receptor.c -o messagePassing/l2Msgq/receptor
+  Ejecución:
+    Terminal 1 (Receptor esperando mensaje):
+      ./messagePassing/l2Msgq/receptor
+    Terminal 2 (Emisor enviando mensaje):
+      ./messagePassing/l2Msgq/emisor
 
-[Patrón General para cualquier dupla en C]
-  cd combinaciones/duplas/<nombreDupla>
-  gcc program.c -o run -lpthread -lrt
-  ./run
-  cd ../../..
+================================================================================
+8. SEMÁFOROS (SINCRONIZACIÓN SYSTEM V)
+================================================================================
 
-[Patrón General para cualquier dupla en C++]
-  cd combinaciones/duplas/<nombreDupla>
-  g++ -std=c++17 program.cpp -o run -lpthread -lrt
-  ./run
-  cd ../../..
+[8.1 Template Mínimo]
+  Ruta: semafora/template/template.c
+  Compilación:
+    gcc semafora/template/template.c -o semafora/template/run
+  Ejecución:
+    ./semafora/template/run
 
-[Patrón para duplas que usan Execv]
-  cd combinaciones/duplas/<duplaConExecv>
-  gcc hijo.c -o hijo
-  gcc program.c -o run -lpthread -lrt   # (o g++ -std=c++17 si es .cpp)
-  ./run
-  cd ../../..
+[8.2 Program_0 (Inicializador y Operaciones P/V)]
+  Compilación:
+    gcc semafora/program0/program0Init.c -o semafora/program0/init
+    gcc semafora/program0/program0.c -o semafora/program0/run
+  Ejecución:
+    1. Inicializar el semáforo:
+       ./semafora/program0/init
+    2. Ejecutar operaciones sobre el semáforo:
+       ./semafora/program0/run
 
---------------------------------------------------------------------------------
-6. SCRIPT ONE-LINER PARA COMPILAR Y COMPROBAR TODO EL REPOSITORIO
---------------------------------------------------------------------------------
+================================================================================
+9. SHARED MEMORY (MEMORIA COMPARTIDA SYSTEM V)
+================================================================================
 
-Para verificar en 3 segundos que todos los programas C y C++ compilan sin fallos:
+[9.1 Template Mínimo]
+  Ruta: sharedMemory/template/template.c
+  Compilación:
+    gcc sharedMemory/template/template.c -o sharedMemory/template/run
+  Ejecución:
+    ./sharedMemory/template/run
 
-  python3 -c '
-import glob, subprocess
-c = [f for f in glob.glob("**/*.c", recursive=True) if not f.startswith("kernel")]
-cpp = [f for f in glob.glob("**/*.cpp", recursive=True) if not f.startswith("kernel")]
-errs = []
-for f in c:
-    if subprocess.run(["gcc", "-c", f, "-o", "/dev/null", "-lpthread", "-lrt"], capture_output=True).returncode != 0: errs.append(f)
-for f in cpp:
-    if subprocess.run(["g++", "-std=c++17", "-c", f, "-o", "/dev/null", "-lpthread"], capture_output=True).returncode != 0: errs.append(f)
-print(f"Todo correcto: {len(c)+len(cpp)} programas compilados exitosamente." if not errs else f"Errores en: {errs}")
-'
+[9.2 Program_0 (Cliente y Servidor en 2 Terminales)]
+  Compilación:
+    gcc sharedMemory/program0/program0Server.c -o sharedMemory/program0/server
+    gcc sharedMemory/program0/program0Client.c -o sharedMemory/program0/client
+  Ejecución:
+    Terminal 1 (Servidor crea segmento):
+      ./sharedMemory/program0/server
+    Terminal 2 (Cliente lee y modifica segmento):
+      ./sharedMemory/program0/client
+
+================================================================================
+10. LOCKS (HILOS Y EXCLUSIÓN MUTUA EN C++)
+================================================================================
+
+[10.1 Template Mínimo (std::mutex)]
+  Ruta: locks/template/template.cpp
+  Compilación:
+    g++ -std=c++17 locks/template/template.cpp -o locks/template/run -lpthread
+  Ejecución:
+    ./locks/template/run
+
+[10.2 Program_0 (Mutex manual lock/unlock)]
+  Ruta: locks/program0/program0.cpp
+  Compilación:
+    g++ -std=c++17 locks/program0/program0.cpp -o locks/program0/run -lpthread
+  Ejecución:
+    ./locks/program0/run
+
+[10.3 Lock Guard (Patrón RAII con std::lock_guard)]
+  Ruta: locks/lockGuard/lockGuard.cpp
+  Compilación:
+    g++ -std=c++17 locks/lockGuard/lockGuard.cpp -o locks/lockGuard/run -lpthread
+  Ejecución:
+    ./locks/lockGuard/run
+
+[10.4 Manejo de Excepciones y Retención de Cerrojos]
+  Ruta: locks/lockExceptionDemo/lockExceptionDemo.cpp
+  Compilación:
+    g++ -std=c++17 locks/lockExceptionDemo/lockExceptionDemo.cpp -o locks/lockExceptionDemo/run -lpthread
+  Ejecución:
+    ./locks/lockExceptionDemo/run
+
+[10.5 Demostración de Condición de Carrera en Hilos]
+  Compilación:
+    g++ -std=c++17 locks/raceConditionDemo/raceConditionDemo.cpp -o locks/raceConditionDemo/runRace -lpthread
+    g++ -std=c++17 locks/raceConditionDemo/threadsRaceCondition.cpp -o locks/raceConditionDemo/runThreads -lpthread
+  Ejecución:
+    ./locks/raceConditionDemo/runRace
+    ./locks/raceConditionDemo/runThreads
+
+[10.6 Creación Básica de Hilos]
+  Ruta: locks/basicThreads/basicThreads.cpp
+  Compilación:
+    g++ -std=c++17 locks/basicThreads/basicThreads.cpp -o locks/basicThreads/run -lpthread
+  Ejecución:
+    ./locks/basicThreads/run
+
+================================================================================
+11. CONDICIONAL VARIABLE (SINCRONIZACIÓN DE HILOS POR EVENTOS)
+================================================================================
+
+[11.1 Template Mínimo]
+  Ruta: condicionalVariable/template/template.cpp
+  Compilación:
+    g++ -std=c++17 condicionalVariable/template/template.cpp -o condicionalVariable/template/run -lpthread
+  Ejecución:
+    ./condicionalVariable/template/run
+
+[11.2 Program_0 (Carrera sincronizada de 10 hilos)]
+  Ruta: condicionalVariable/program0/program0.cpp
+  Compilación:
+    g++ -std=c++17 condicionalVariable/program0/program0.cpp -o condicionalVariable/program0/run -lpthread
+  Ejecución:
+    ./condicionalVariable/program0/run
+
+================================================================================
+12. COMBINACIONES MULTITÉCNICA AVANZADAS
+================================================================================
+
+[12.1 Práctica P1 (Fork + Pipe + Execv + Signal + MsgQueue)]
+  Compilación:
+    gcc combinaciones/forkPipeExecvSignalizacionMessagePassing/procesoC.c -o combinaciones/forkPipeExecvSignalizacionMessagePassing/proceso_c
+    gcc combinaciones/forkPipeExecvSignalizacionMessagePassing/procesoA.c -o combinaciones/forkPipeExecvSignalizacionMessagePassing/proceso_a -lrt
+  Ejecución:
+    cd combinaciones/forkPipeExecvSignalizacionMessagePassing
+    ./proceso_a
+    cd ../..
+
+[12.2 Proyecto P2 (Demostración Integrada de las 7 Técnicas POSIX)]
+  Compilación:
+    gcc combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/relector.c -o combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/relector
+    gcc combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/principal.c -o combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/principal
+  Ejecución:
+    cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2
+    ./principal
+    (En otra terminal, enviar señal SIGINT: kill -2 <PID_MOSTRADO>)
+    cd ../..
+
+[12.3 Proyecto P3 (Cadena Secuencial Dominó de 7 Técnicas)]
+  Compilación:
+    gcc combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/final.c -o combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/final
+    gcc combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/cadena.c -o combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/cadena
+  Ejecución:
+    cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3
+    ./cadena
+    cd ../..
+
+[12.4 Proyecto P4 (Servidor Continuo de 7 Técnicas)]
+  Compilación:
+    gcc combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/final.c -o combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/final
+    gcc combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/servidor.c -o combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/servidor
+  Ejecución:
+    cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4
+    ./servidor
+    cd ../..
+
+[12.5 Laboratorio 03 (Signalización + FIFO + Message Passing)]
+  Compilación:
+    gcc combinaciones/signalizacionFifoMessagePassing/program1.c -o combinaciones/signalizacionFifoMessagePassing/p1
+    gcc combinaciones/signalizacionFifoMessagePassing/program2.c -o combinaciones/signalizacionFifoMessagePassing/p2
+    gcc combinaciones/signalizacionFifoMessagePassing/program3.c -o combinaciones/signalizacionFifoMessagePassing/p3
+
+================================================================================
+13. GUÍA DE COMPILACIÓN Y PRUEBA DE LAS 55 DUPLAS (combinaciones/duplas)
+================================================================================
+
+Las duplas combinan exactamente 2 técnicas independientes.
+Cada carpeta en combinaciones/duplas/ contiene su programa principal:
+  - 'program.c' (para implementaciones en C)
+  - 'program.cpp' (para implementaciones en C++)
+  - 'hijo.c' (programa secundario adicional en las duplas que usan Execv)
+
+A continuación se muestran ejemplos detallados paso a paso para cada categoría de dupla:
+
+[Duplas en C (Ejemplo: Pipe + Fork)]
+  Carpeta: combinaciones/duplas/pipeFork/
+  Pasos:
+    cd combinaciones/duplas/pipeFork
+    gcc program.c -o run -lpthread -lrt
+    ./run
+    cd ../../..
+
+[Duplas en C (Ejemplo: Shared Memory + Semáforos)]
+  Carpeta: combinaciones/duplas/sharedMemorySemafora/
+  Pasos:
+    cd combinaciones/duplas/sharedMemorySemafora
+    gcc program.c -o run -lpthread -lrt
+    ./run
+    cd ../../..
+
+[Duplas en C (Ejemplo: Signalización + FIFO)]
+  Carpeta: combinaciones/duplas/signalizacionFifo/
+  Pasos:
+    cd combinaciones/duplas/signalizacionFifo
+    gcc program.c -o run -lpthread -lrt
+    ./run
+    cd ../../..
+
+[Duplas en C++ (Ejemplo: Locks + Variable Condicional)]
+  Carpeta: combinaciones/duplas/locksCondicionalVariable/
+  Pasos:
+    cd combinaciones/duplas/locksCondicionalVariable
+    g++ -std=c++17 program.cpp -o run -lpthread -lrt
+    ./run
+    cd ../../..
+
+[Duplas en C++ (Ejemplo: Message Passing + Locks)]
+  Carpeta: combinaciones/duplas/messagePassingLocks/
+  Pasos:
+    cd combinaciones/duplas/messagePassingLocks
+    g++ -std=c++17 program.cpp -o run -lpthread -lrt
+    ./run
+    cd ../../..
+
+[Duplas con Execv (Ejemplo: Execv + Fork)]
+  Carpeta: combinaciones/duplas/execvFork/
+  Pasos:
+    cd combinaciones/duplas/execvFork
+    gcc hijo.c -o hijo
+    gcc program.c -o run -lpthread -lrt
+    ./run
+    cd ../../..
+
+[Duplas con Execv (Ejemplo: Dup2 + Execv)]
+  Carpeta: combinaciones/duplas/dup2Execv/
+  Pasos:
+    cd combinaciones/duplas/dup2Execv
+    gcc hijo.c -o hijo
+    gcc program.c -o run -lpthread -lrt
+    ./run
+    cd ../../..
+
+================================================================================
+FIN DE LA GUÍA
 ================================================================================
