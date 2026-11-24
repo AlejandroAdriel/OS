@@ -1,0 +1,258 @@
+====================================================================
+GUIA DE COMPILACION Y PRUEBAS DEL MODULO DE CARACTERES: ucspdev
+====================================================================
+
+Archivos esperados en el directorio de trabajo:
+  - ucspdev.c   (codigo fuente del modulo del kernel)
+  - Makefile    (archivo de compilacion kbuild)
+
+Nota sobre el nombre del archivo fuente:
+  En el Makefile figura `obj-m += ucspdev.o`. Por lo tanto, el archivo
+  fuente C debe llamarse `ucspdev.c` (si lo guardaste como `ucspdev_3.c`,
+  renombralo a `ucspdev.c` o ajusta `obj-m` en el Makefile).
+
+Contenido de referencia de `Makefile`:
+  obj-m += ucspdev.o
+
+  all:
+  	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+  clean:
+  	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+
+
+--------------------------------------------------------------------
+1. REQUISITOS PREVIOS (UBUNTU)
+--------------------------------------------------------------------
+Antes de compilar, verifica que tienes instalado:
+  - Compilador `gcc` (incluida la version exacta con la que se compilo el
+    kernel, por ejemplo `gcc-12` en Ubuntu 6.8.0-52-generic) y herramienta `make`
+  - Encabezados y arbol de construccion del kernel en ejecucion:
+    `/lib/modules/$(uname -r)/build`
+
+Si `apt` o `dpkg` queda congelado con `Waiting for cache lock` por un
+proceso previo interrumpido o colgado en segundo plano:
+  sudo killall apt apt-get
+  sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/lib/apt/lists/lock /var/cache/apt/archives/lock
+  sudo dpkg --configure -a
+
+Comandos para actualizar el sistema e instalar todo lo necesario en Ubuntu
+(incluyendo `gcc-12`, necesario cuando `kbuild` falla con `gcc-12: not found`
+o `Error 127` por exigir la version exacta con la que se construyo el kernel):
+  sudo apt update
+  sudo apt upgrade -y
+  sudo apt install -y gcc-12 build-essential linux-headers-$(uname -r) kmod
+
+Si el paquete `linux-headers-$(uname -r)` no aparece exacto (por ejemplo tras
+actualizar el kernel sin reiniciar aun), revisa el kernel activo y los headers
+disponibles:
+  uname -r
+  apt-cache search linux-headers-$(uname -r)
+
+Si instalaste un kernel nuevo, reinicia el equipo para arrancar con el kernel
+cuyos headers acabas de instalar:
+  sudo reboot
+
+Puedes comprobar la ruta de construccion con:
+  ls -ld /lib/modules/$(uname -r)/build
+
+
+--------------------------------------------------------------------
+2. COMPILACION DEL MODULO
+--------------------------------------------------------------------
+Abre una terminal (preferentemente en consola o revisando `dmesg`),
+ubicate en el directorio donde estan `ucspdev.c` y `Makefile`, y ejecuta:
+
+  make
+
+Que ocurre durante este paso:
+  - `make` invoca al sistema `kbuild` del kernel mediante:
+    `make -C /lib/modules/$(uname -r)/build M=$(PWD) modules`
+  - Se compila `ucspdev.c` a `ucspdev.o`, se genera la informacion de
+    modulo (`ucspdev.mod.o`) y se enlaza el modulo cargable `ucspdev.ko`.
+  - Se verifican macros como `MODULE_LICENSE("GPL")`, `MODULE_AUTHOR(...)`
+    y `MODULE_DESCRIPTION(...)`.
+
+Verifica que se haya creado `ucspdev.ko`:
+  ls -lh ucspdev.ko
+
+
+--------------------------------------------------------------------
+3. INSPECCION DE METADATOS DEL MODULO
+--------------------------------------------------------------------
+Antes o despues de cargar el modulo, puedes revisar sus metadatos con:
+
+  modinfo ./ucspdev.ko
+
+Aqui deberias ver:
+  - `license: GPL`
+  - `author: Alejandro Adriel Quispe Montes`
+  - `description: Descripcion`
+  - `vermagic:` con la version de tu kernel
+
+
+--------------------------------------------------------------------
+4. CARGA DEL MODULO Y OBTENCION DEL NUMERO MAJOR
+--------------------------------------------------------------------
+Carga el modulo en el kernel con privilegios de administrador:
+
+  sudo insmod ./ucspdev.ko
+
+Que hace `ucspdev_init()`:
+  - Llama a `register_chrdev(0, "ucspdev", &fops)`. Al pasar `0` como
+    numero major, el kernel asigna un numero major dinamico libre.
+  - Si el registro falla, devuelve un codigo negativo y el modulo no carga.
+  - Si tiene exito, registra `"ucspdev"` en `/proc/devices` y escribe
+    mensajes informativos en el ring buffer del kernel (incluido el
+    comando sugerido `mknod /dev/ucspdev c <Major> 0`).
+
+Comprueba que el modulo esta cargado y su contador de uso (3ra columna):
+  lsmod | grep ucspdev
+  cat /proc/modules | grep ucspdev
+
+Revisa el numero major asignado en el log del kernel:
+  sudo dmesg | tail -n 15
+
+Si además quieres ver los mensajes en tiempo real mientras cargas/descargas el módulo o lees/escribes en /dev/ucspdev, abre otra terminal con:
+  sudo dmesg -w
+
+Tambien puedes consultar el major registrado en:
+  cat /proc/devices | grep ucspdev
+
+
+--------------------------------------------------------------------
+5. CREACION DEL ARCHIVO DE DISPOSITIVO (/dev/ucspdev)
+--------------------------------------------------------------------
+El modulo registra el driver en el kernel, pero no crea por si solo el
+archivo especial en `/dev`. Crealo con `mknod` usando el `<MAJOR>` que
+aparecio en `dmesg` o `/proc/devices`:
+
+  sudo mknod /dev/ucspdev c <MAJOR> 0
+  sudo chmod 666 /dev/ucspdev
+
+Que significa cada argumento:
+  - `/dev/ucspdev` : ruta convencional del archivo de dispositivo
+  - `c`            : indica que es un dispositivo de caracteres (character device)
+  - `<MAJOR>`      : numero major asignado al cargar el modulo
+  - `0`            : numero minor (el driver lo ignora en este ejemplo)
+
+Verifica el archivo creado (debe empezar con `c`, por ejemplo `crw-rw-rw-`):
+  ls -l /dev/ucspdev
+
+
+--------------------------------------------------------------------
+6. PRUEBAS DE FUNCIONALIDADES
+--------------------------------------------------------------------
+
+6.1. Apertura (`device_open`), lectura (`device_read`) y cierre (`device_release`)
+--------------------------------------------------------------------------------
+Al abrir `/dev/ucspdev` (por ejemplo con `cat`), `device_open()` incrementa
+un contador interno estatico (`counter`), formatea el mensaje:
+  "I already told you <N> times Hello world!\n"
+inicializa `msg_Ptr = msg`, incrementa el contador de uso del modulo con
+`try_module_get(THIS_MODULE)` y devuelve `SUCCESS` (0).
+
+Luego, `device_read()` copia los caracteres desde `msg` hacia el espacio de
+usuario mediante `put_user()`, devolviendo la cantidad de bytes leidos. Cuando
+`*msg_Ptr == 0`, devuelve `0` (EOF) y `cat` termina. Al cerrar el archivo,
+`device_release()` libera el bloqueo (`Device_Open--`) y llama a
+`module_put(THIS_MODULE)`.
+
+Prueba ejecutando `cat` varias veces seguidas:
+  cat /dev/ucspdev
+  cat /dev/ucspdev
+  cat /dev/ucspdev
+
+Resultado esperado:
+  - Primera vez:  "I already told you 0 times Hello world!"
+  - Segunda vez:  "I already told you 1 times Hello world!"
+  - Tercera vez:  "I already told you 2 times Hello world!"
+
+6.2. Escritura en el dispositivo (`device_write`)
+--------------------------------------------------------------------------------
+En esta version del modulo, `device_write()` copia bytes desde el espacio de
+usuario hacia el buffer interno `msg` usando `get_user()`, agrega el terminador
+nulo `'\0'`, reinicia `msg_Ptr = msg` y devuelve la cantidad de bytes escritos
+(hasta `BUF_LEN - 1`, es decir, 79 caracteres utiles).
+
+Prueba escribir un mensaje en `/dev/ucspdev`:
+  echo "Mensaje desde espacio de usuario" | sudo tee /dev/ucspdev
+
+Nota: si escribes con `echo`, se incluye el salto de linea `\n` al final.
+Si quieres escribir exactamente un texto sin salto de linea extra:
+  printf "Texto exacto" | sudo tee /dev/ucspdev
+
+6.3. Lectura posterior a una escritura
+--------------------------------------------------------------------------------
+Como `device_write()` actualiza `msg` y deja `msg_Ptr = msg`, al leer el
+dispositivo despues de escribir obtendras el texto que enviaste:
+
+  cat /dev/ucspdev
+
+Resultado esperado:
+  El ultimo mensaje escrito con `tee` o `write()`.
+  (Si vuelves a leer con `cat /dev/ucspdev`, ahora veras el mensaje generado
+  por `device_open()` con el contador incrementado, porque `device_open()`
+  sobreescribe `msg` al abrir el archivo).
+
+6.4. Control de acceso concurrente (`Device_Open` / `-EBUSY`)
+--------------------------------------------------------------------------------
+`device_open()` usa la variable estatica `Device_Open` para permitir solo un
+proceso abierto a la vez. Si un segundo proceso intenta abrir `/dev/ucspdev`
+mientras el primero lo mantiene abierto, `device_open()` devuelve `-EBUSY`
+("Device or resource busy").
+
+Puedes simularlo manteniendo el dispositivo abierto en un subshell o desde dos
+terminales:
+
+  Terminal 1:
+    exec 3</dev/ucspdev
+
+  Terminal 2 (mientras el descriptor 3 siga abierto en Terminal 1):
+    cat /dev/ucspdev
+    (Debera fallar con un error de dispositivo ocupado / EBUSY).
+
+  Cierra el descriptor en Terminal 1:
+    exec 3<&-
+
+6.5. Proteccion contra descarga mientras esta en uso (`try_module_get` / `module_put`)
+--------------------------------------------------------------------------------
+Mientras un proceso mantenga abierto `/dev/ucspdev`, el contador de referencias
+del modulo (`Used` en `lsmod`, 3ra columna en `/proc/modules`) sera mayor que 0,
+por lo que `rmmod` fallara hasta que se cierre el archivo.
+
+Verifica el contador de uso:
+  lsmod | grep ucspdev
+  cat /proc/modules | grep ucspdev
+
+Si intentas descargar mientras esta abierto:
+  sudo rmmod ucspdev
+  (Debera indicar que el modulo esta en uso).
+
+
+--------------------------------------------------------------------
+7. DESCARGA DEL MODULO Y LIMPIEZA DE ARCHIVOS
+--------------------------------------------------------------------
+Cuando termines las pruebas:
+
+1. Elimina el archivo de dispositivo creado en `/dev`:
+   sudo rm -f /dev/ucspdev
+
+2. Descarga el modulo del kernel (`ucspdev_exit()` ejecutara `unregister_chrdev`):
+   sudo rmmod ucspdev
+
+3. Verifica que el modulo ya no este en `lsmod`, `/proc/modules` ni `/proc/devices`:
+   lsmod | grep ucspdev
+   cat /proc/modules | grep ucspdev
+   cat /proc/devices | grep ucspdev
+
+4. Revisa el registro final del kernel:
+   sudo dmesg | tail -n 10
+
+5. Limpia los archivos generados por `make`:
+   make clean
+
+Que hace `make clean`:
+  - Ejecuta `make -C /lib/modules/$(uname -r)/build M=$(PWD) clean`,
+    eliminando `*.o`, `*.ko`, `*.mod*`, `Module.symvers`, `modules.order`
+    y archivos temporales de kbuild.

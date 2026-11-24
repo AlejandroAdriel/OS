@@ -1,0 +1,39 @@
+gcc shm_server.c -o server
+gcc shm_client.c -o client
+./server &
+./client
+
+gcc Semaphore.c -o sem
+./sem c "texto1" &
+./sem g "texto2"
+
+# Ver recursos IPC activos
+ipcs
+
+# Limpiar todos los recursos IPC del usuario si quedaron colgados
+ipcrm -a
+
+gcc server2.c -o server
+gcc client2.c -o client
+
+./server
+
+
+./client 1 & ./client 2 & ./client 3 & ./client 4 & ./client 5
+
+gcc Mserver2.c -o server
+gcc Mclient2.c -o client
+
+./server
+
+./client 1 "hola desde proceso 1" & ./client 2 "hola desde proceso 2" & ./client 3 "hola desde proceso 3" & ./client 4 "hola desde proceso 4" & ./client 5 "hola desde proceso 5"
+
+gcc server.c -o server
+gcc client.c -o client
+
+./server
+
+./client 1 "hola 1" & ./client 2 "hola 2" & ./client 3 "hola 3" & ./client 4 "hola 4" & ./client 5 "hola 5" & ./client 6 "hola 6"
+
+
+

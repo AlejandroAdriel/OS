@@ -1,0 +1,155 @@
+================================================================================
+GUÍA MAESTRA DE COMANDOS DE TERMINAL: COMPILACIÓN Y PRUEBA (OS)
+================================================================================
+
+Este archivo contiene los comandos exactos y funcionales para compilar y probar
+todos los programas del proyecto organizados en carpetas (excluyendo kernel).
+
+--------------------------------------------------------------------------------
+1. COMANDOS ÚTILES DEL SISTEMA E IPC
+--------------------------------------------------------------------------------
+- Ver procesos:            ps -ef | grep <nombre>   |   pstree -p
+- Ver hilos activos:       ps -eLf | grep <nombre>
+- Listar IPCs activos:     ipcs -a  (o -m para memoria, -q para colas, -s para semáforos)
+- Limpiar todos los IPC:   ipcrm -a (o: ipcs -m | awk '{print $2}' | xargs -n1 ipcrm -m 2>/dev/null)
+- Enviar señales:          kill -SIGUSR1 <PID>  |  kill -SIGINT <PID>  |  kill -9 <PID>
+
+--------------------------------------------------------------------------------
+2. COMPILACIÓN Y PRUEBA DE TEMPLATES (MÍNIMA IMPLEMENTACIÓN)
+--------------------------------------------------------------------------------
+
+[Fork]
+  gcc fork/template/template.c -o fork/template/run && ./fork/template/run
+
+[Pipe]
+  gcc pipe/template/template.c -o pipe/template/run && ./pipe/template/run
+
+[FIFO]
+  gcc fifo/template/template.c -o fifo/template/run && ./fifo/template/run
+
+[Signalización]
+  gcc signalizacion/template/template.c -o signalizacion/template/run && ./signalizacion/template/run
+
+[Message Passing]
+  gcc messagePassing/template/template.c -o messagePassing/template/run && ./messagePassing/template/run
+
+[Semáforos]
+  gcc semafora/template/template.c -o semafora/template/run && ./semafora/template/run
+
+[Memoria Compartida]
+  gcc sharedMemory/template/template.c -o sharedMemory/template/run && ./sharedMemory/template/run
+
+[Execv] (Requiere compilar hijo primero)
+  gcc execv/template/hijo.c -o execv/template/hijo
+  gcc execv/template/template.c -o execv/template/run
+  cd execv/template && ./run && cd ../..
+
+[Dup2] (Requiere compilar hijo primero)
+  gcc dup2/template/hijo.c -o dup2/template/hijo
+  gcc dup2/template/template.c -o dup2/template/run
+  cd dup2/template && ./run && cd ../..
+
+[Locks - C++]
+  g++ -std=c++17 locks/template/template.cpp -o locks/template/run -lpthread && ./locks/template/run
+
+[Condicional Variable - C++]
+  g++ -std=c++17 condicionalVariable/template/template.cpp -o condicionalVariable/template/run -lpthread && ./condicionalVariable/template/run
+
+--------------------------------------------------------------------------------
+3. COMPILACIÓN Y PRUEBA DE PROGRAMAS DIDÁCTICOS (program0 Y DEMOS)
+--------------------------------------------------------------------------------
+
+[Locks y Concurrencia]
+  g++ -std=c++17 locks/program0/program0.cpp -o locks/program0/run -lpthread
+  g++ -std=c++17 locks/lockGuard/lockGuard.cpp -o locks/lockGuard/run -lpthread
+  g++ -std=c++17 locks/lockExceptionDemo/lockExceptionDemo.cpp -o locks/lockExceptionDemo/run -lpthread
+  g++ -std=c++17 locks/raceConditionDemo/raceConditionDemo.cpp -o locks/raceConditionDemo/run -lpthread
+  g++ -std=c++17 locks/raceConditionDemo/threadsRaceCondition.cpp -o locks/raceConditionDemo/runThreads -lpthread
+  g++ -std=c++17 locks/basicThreads/basicThreads.cpp -o locks/basicThreads/run -lpthread
+
+[Fork y Demos de Laboratorio]
+  gcc fork/program0/program0.c -o fork/program0/run
+  gcc fork/raceConditionFork/raceConditionFork.c -o fork/raceConditionFork/run
+  # forkPipe (compila ejecutable llamado por execv):
+  gcc fork/forkPipe/program2.c -o fork/forkPipe/programa2.exe
+  gcc fork/forkPipe/forkPipe.c -o fork/forkPipe/run
+  # forkPipe2:
+  gcc fork/forkPipe2/program3.c -o fork/forkPipe2/program3.exe
+  gcc fork/forkPipe2/forkPipe2.c -o fork/forkPipe2/run
+
+[Shared Memory (Servidor / Cliente en dos terminales)]
+  gcc "sharedMemory/program0/program0Server.c" -o "sharedMemory/program0/server"
+  gcc "sharedMemory/program0/program0Client.c" -o "sharedMemory/program0/client"
+  # Terminal 1: ./"sharedMemory/program0/server"
+  # Terminal 2: ./"sharedMemory/program0/client"
+
+--------------------------------------------------------------------------------
+4. COMPILACIÓN Y PRUEBA DE COMBINACIONES MULTITÉCNICA
+--------------------------------------------------------------------------------
+
+[P1: Fork + Pipe + Execv + Signalización + Message Passing]
+  gcc "combinaciones/forkPipeExecvSignalizacionMessagePassing/procesoC.c" -o "combinaciones/forkPipeExecvSignalizacionMessagePassing/proceso_c"
+  gcc "combinaciones/forkPipeExecvSignalizacionMessagePassing/procesoA.c" -o "combinaciones/forkPipeExecvSignalizacionMessagePassing/proceso_a" -lrt
+  cd combinaciones/forkPipeExecvSignalizacionMessagePassing && ./proceso_a && cd ../..
+
+[P2: 7 Técnicas POSIX Integradas]
+  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/relector.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/relector"
+  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/principal.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2/principal"
+  cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP2 && ./principal && cd ../..
+
+[P3: Cadena Dominó de 7 Técnicas]
+  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/final.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/final"
+  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/cadena.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3/cadena"
+  cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP3 && ./cadena && cd ../..
+
+[P4: Servidor Continuo con 7 Técnicas]
+  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/final.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/final"
+  gcc "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/servidor.c" -o "combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4/servidor"
+  cd combinaciones/signalizacionForkMessagePassingFifoPipeDup2ExecvP4 && ./servidor && cd ../..
+
+[L3: Signalización + FIFO + Message Passing]
+  gcc "combinaciones/signalizacionFifoMessagePassing/program1.c" -o "combinaciones/signalizacionFifoMessagePassing/program1"
+  gcc "combinaciones/signalizacionFifoMessagePassing/program2.c" -o "combinaciones/signalizacionFifoMessagePassing/program2"
+  gcc "combinaciones/signalizacionFifoMessagePassing/program3.c" -o "combinaciones/signalizacionFifoMessagePassing/program3"
+
+--------------------------------------------------------------------------------
+5. COMPILACIÓN Y PRUEBA DE LAS 55 DUPLAS (combinaciones/duplas)
+--------------------------------------------------------------------------------
+
+[Patrón General para cualquier dupla en C]
+  cd combinaciones/duplas/<nombreDupla>
+  gcc program.c -o run -lpthread -lrt
+  ./run
+  cd ../../..
+
+[Patrón General para cualquier dupla en C++]
+  cd combinaciones/duplas/<nombreDupla>
+  g++ -std=c++17 program.cpp -o run -lpthread -lrt
+  ./run
+  cd ../../..
+
+[Patrón para duplas que usan Execv]
+  cd combinaciones/duplas/<duplaConExecv>
+  gcc hijo.c -o hijo
+  gcc program.c -o run -lpthread -lrt   # (o g++ -std=c++17 si es .cpp)
+  ./run
+  cd ../../..
+
+--------------------------------------------------------------------------------
+6. SCRIPT ONE-LINER PARA COMPILAR Y COMPROBAR TODO EL REPOSITORIO
+--------------------------------------------------------------------------------
+
+Para verificar en 3 segundos que todos los programas C y C++ compilan sin fallos:
+
+  python3 -c '
+import glob, subprocess
+c = [f for f in glob.glob("**/*.c", recursive=True) if not f.startswith("kernel")]
+cpp = [f for f in glob.glob("**/*.cpp", recursive=True) if not f.startswith("kernel")]
+errs = []
+for f in c:
+    if subprocess.run(["gcc", "-c", f, "-o", "/dev/null", "-lpthread", "-lrt"], capture_output=True).returncode != 0: errs.append(f)
+for f in cpp:
+    if subprocess.run(["g++", "-std=c++17", "-c", f, "-o", "/dev/null", "-lpthread"], capture_output=True).returncode != 0: errs.append(f)
+print(f"Todo correcto: {len(c)+len(cpp)} programas compilados exitosamente." if not errs else f"Errores en: {errs}")
+'
+================================================================================

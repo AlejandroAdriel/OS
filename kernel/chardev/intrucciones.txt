@@ -1,0 +1,30 @@
+actualizar gcc
+
+sudo apt install -y gcc-12 build-essential linux-headers-$(uname -r) kmod
+
+inicializar
+
+make
+sudo insmod chardev.ko
+
+buscar major
+
+grep chardev /proc/devices
+
+luego
+
+sudo mknod /dev/chardev c <MAJOR> 0
+sudo chmod 666 /dev/chardev
+
+revisar write 
+
+echo "holaaaaa chardev" > /dev/chardev
+cat /dev/chardev
+
+finalizar 
+
+sudo rmmod chardev
+sudo rm -f /dev/chardev
+
+borrar archivos 
+make clean
